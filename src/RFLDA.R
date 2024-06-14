@@ -291,131 +291,132 @@ system.time(ComputeFeatureImportance(file_format="parquet"))
 
 
 ############# training RandomForest model with top 50, 100, ..., 1950 features ###############################
-### read training sample set consisting of 5394 lncRNA-disease pairs (5394*(3+1952))
-B <- read.xlsx("../output_data/TrainingSample.xlsx", sheet = 1, colNames = FALSE)
-### read variable importance score of each feature
-fs <- read.xlsx("../output_data/FeatureScore.xlsx", sheet = 1, colNames = FALSE)
 
 ComputeClassficationAccuracy<-function(){
+  ### read training sample set consisting of 5394 lncRNA-disease pairs (5394*(3+1952))
+  B <- read.xlsx("../output_data/TrainingSample.xlsx", sheet = 1, colNames = FALSE)
+  ### read variable importance score of each feature
+  fs <- read.xlsx("../output_data/FeatureScore.xlsx", sheet = 1, colNames = FALSE)
   
-    # Set up parallel backend
-    ncores_to_use <- detectCores() - 1
   
-    cl <- makeCluster(ncores_to_use)
-    registerDoParallel(cl)
-    
-    # We declare the number of tree's to use for the forest here to use it
-    # for calculating number of tree's per core; this was declared as 500
-    # in the initial code within the call to randomForest as ntree parameter
-    ntrees_for_forest <- 500
-    
-    # Determine the number of trees per core
-    ntree_per_core <- floor((ntrees_for_forest / ncores_to_use)) # Adjust based on the total number of cores and desired chunk size
-    
-    
-    ### gaccuracy is used to record classification accuracy on differnt training sample subset
-    gaccuracy<-matrix(0,nrow=39,ncol=2)
+  # Set up parallel backend
+  ncores_to_use <- detectCores() - 1
 
-    tt <- 50
-    
-    ### nrow(df)=1952
-    while (tt < nrow(fs))   
-    {
-        ### classification accuracy in each fold in 10-fold crossing validataion 
-        laccuracy<-c(0,0,0,0,0,0,0,0,0,0)    
-        ### average classification accuracy in 10-fold crossing validataion
-        lmeanaccuracy<-0
+  cl <- makeCluster(ncores_to_use)
+  registerDoParallel(cl)
+  
+  # We declare the number of tree's to use for the forest here to use it
+  # for calculating number of tree's per core; this was declared as 500
+  # in the initial code within the call to randomForest as ntree parameter
+  ntrees_for_forest <- 500
+  
+  # Determine the number of trees per core
+  ntree_per_core <- floor((ntrees_for_forest / ncores_to_use)) # Adjust based on the total number of cores and desired chunk size
+  
+  
+  ### gaccuracy is used to record classification accuracy on differnt training sample subset
+  gaccuracy<-matrix(0,nrow=39,ncol=2)
 
-        ### construct training sample subset consisted X1(label) + top tt feature
-        ttt <- fs[1:tt,1]
-        B1 <- subset(B[,], select=ttt)
-        B3 <- subset(B[,], select=X1)
-        B4 <- cbind(B3, B1)   
+  tt <- 50
+  
+  ### nrow(df)=1952
+  while (tt < nrow(fs))   
+  {
+      ### classification accuracy in each fold in 10-fold crossing validataion 
+      laccuracy<-c(0,0,0,0,0,0,0,0,0,0)    
+      ### average classification accuracy in 10-fold crossing validataion
+      lmeanaccuracy<-0
 
-        ### random resampling in 10-fold crossing validation
-        ind<- sample(10, nrow(B4), replace = TRUE, prob=c(0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1,  0.1, 0.1))
+      ### construct training sample subset consisted X1(label) + top tt feature
+      ttt <- fs[1:tt,1]
+      B1 <- subset(B[,], select=ttt)
+      B3 <- subset(B[,], select=X1)
+      B4 <- cbind(B3, B1)   
 
-        for(i in 1:10)
-        {
-            ### train RandomForest model
-            # rf=randomForest(X1~.,data = B4[ind != i,],mtry=floor(tt/3), importance = TRUE, ntree=500, na.action=na.omit)              
-            # NOTE by SRM!
-            # Training this model is slow and using a single processor. See below
-            # user  system elapsed 
-            # 28.947   0.042  28.973 
-            # This means for the entire work to complete which is the creation
-            # of 10 models 200 times we are looking at approx 15 Hours!
-          
-            # Parallel random forest training
-            # print(
-            #     system.time({
-            #       rf <- foreach(ntree = rep(ntree_per_core, ncores_to_use), .combine = combine, .packages = 'randomForest') %dopar% {
-            #         randomForest(X1 ~ ., data = B4[ind != i,], mtry = floor(tt / 3), importance = TRUE, ntree = ntree, na.action = na.omit)
-            #         }
-            #     }
-            #   )
-            # )
-            
-            # Start - Parallel ranger training
-            # Set the number of trees and other parameters
-            ntree <- 500
-            mtry_value <- floor(tt / 3)
-            
-            # Train the random forest using ranger with parallel processing
-            print(
-              system.time({
-                rf <- ranger(
-                  X1 ~ .,
-                  data = B4[ind != i,],
-                  mtry = mtry_value,
-                  importance = 'impurity', # Use 'impurity' or 'permutation' for ranger importance
-                  num.trees = ntree,
-                  na.action = 'na.omit',
-                  num.threads = detectCores() - 1 # Use one less core than available
-                )
-              })
-            )
-          
-            
-            # End of - Parallel ranger training
-          
-            ### predict using RadomForest model  
-            # NOTE! SRM
-            # This was used with RandomForest object
-            # pred <- predict(rf, B4[ind == i,])
-            # the prediction function of ranger object returns more objects
-            # however we only need the predictions hence the code change below
-            pred <- predict(rf, B4[ind == i,])$predictions
-         
-            ### judging the category of test samples with threshold = 0.5
-            for(j in 1:length(pred)) 
-            {   if(pred[j] >= 0.5)
-                {
-                   pred[j] = 1
-                }else
-               {
-                   pred[j] = 0
-                }
-            }   
-    
-            ### construct confusion matrix
-            t=table(observed = B4[ind==i, "X1"], predicted = pred)
+      ### random resampling in 10-fold crossing validation
+      ind<- sample(10, nrow(B4), replace = TRUE, prob=c(0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1,  0.1, 0.1))
+
+      for(i in 1:10)
+      {
+          ### train RandomForest model
+          # rf=randomForest(X1~.,data = B4[ind != i,],mtry=floor(tt/3), importance = TRUE, ntree=500, na.action=na.omit)              
+          # NOTE by SRM!
+          # Training this model is slow and using a single processor. See below
+          # user  system elapsed 
+          # 28.947   0.042  28.973 
+          # This means for the entire work to complete which is the creation
+          # of 10 models 200 times we are looking at approx 15 Hours!
         
-            ### compute classification accuracy
-            laccuracy[i]=(t[1,1]+t[2,2])/(t[1,1]+t[1,2]+t[2,1]+t[2,2])
-            lmeanaccuracy=lmeanaccuracy+laccuracy[i]/10				
-        }
-    
-        gaccuracy[tt/50,1]=tt
-        gaccuracy[tt/50,2]=lmeanaccuracy
-    
-        tt <- tt+50
-        print(tt)
-    }
-    gaccuracy <- data.frame(gaccuracy)
-    write_xlsx(gaccuracy, "../output_data/TrainingSample-gaccuracy.xlsx", col_names = FALSE, use_zip64 = TRUE)
-    
-    stopCluster(cl)
+          # Parallel random forest training
+          # print(
+          #     system.time({
+          #       rf <- foreach(ntree = rep(ntree_per_core, ncores_to_use), .combine = combine, .packages = 'randomForest') %dopar% {
+          #         randomForest(X1 ~ ., data = B4[ind != i,], mtry = floor(tt / 3), importance = TRUE, ntree = ntree, na.action = na.omit)
+          #         }
+          #     }
+          #   )
+          # )
+          
+          # Start - Parallel ranger training
+          # Set the number of trees and other parameters
+          ntree <- 500
+          mtry_value <- floor(tt / 3)
+          
+          # Train the random forest using ranger with parallel processing
+          print(
+            system.time({
+              rf <- ranger(
+                X1 ~ .,
+                data = B4[ind != i,],
+                mtry = mtry_value,
+                importance = 'impurity', # Use 'impurity' or 'permutation' for ranger importance
+                num.trees = ntree,
+                na.action = 'na.omit',
+                num.threads = detectCores() - 1 # Use one less core than available
+              )
+            })
+          )
+        
+          
+          # End of - Parallel ranger training
+        
+          ### predict using RadomForest model  
+          # NOTE! SRM
+          # This was used with RandomForest object
+          # pred <- predict(rf, B4[ind == i,])
+          # the prediction function of ranger object returns more objects
+          # however we only need the predictions hence the code change below
+          pred <- predict(rf, B4[ind == i,])$predictions
+       
+          ### judging the category of test samples with threshold = 0.5
+          for(j in 1:length(pred)) 
+          {   if(pred[j] >= 0.5)
+              {
+                 pred[j] = 1
+              }else
+             {
+                 pred[j] = 0
+              }
+          }   
+  
+          ### construct confusion matrix
+          t=table(observed = B4[ind==i, "X1"], predicted = pred)
+      
+          ### compute classification accuracy
+          laccuracy[i]=(t[1,1]+t[2,2])/(t[1,1]+t[1,2]+t[2,1]+t[2,2])
+          lmeanaccuracy=lmeanaccuracy+laccuracy[i]/10				
+      }
+  
+      gaccuracy[tt/50,1]=tt
+      gaccuracy[tt/50,2]=lmeanaccuracy
+  
+      tt <- tt+50
+      print(tt)
+  }
+  gaccuracy <- data.frame(gaccuracy)
+  write_xlsx(gaccuracy, "../output_data/TrainingSample-gaccuracy.xlsx", col_names = FALSE, use_zip64 = TRUE)
+  
+  stopCluster(cl)
 }
 system.time(ComputeClassficationAccuracy())
 ##############################################################################################################
