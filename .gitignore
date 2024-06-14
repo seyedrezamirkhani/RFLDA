@@ -1,0 +1,5 @@
+# R files
+.Rhistory
+
+# vim tmp files
+.swp
