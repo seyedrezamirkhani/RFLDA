@@ -367,12 +367,7 @@ ComputeClassficationAccuracy <- function(file_format = file_format) {
   fs <- LoadData(file_name = "../output_data/FeatureScore", file_format =
                    file_format)
   
-  
-  # Set up parallel backend
   ncores_to_use <- detectCores() - 1
-  
-  cl <- makeCluster(ncores_to_use)
-  registerDoParallel(cl)
   
   # We declare the number of tree's to use for the forest here to use it
   # for calculating number of tree's per core; this was declared as 500
@@ -446,7 +441,7 @@ ComputeClassficationAccuracy <- function(file_format = file_format) {
           # Use 'impurity' or 'permutation' for ranger importance
           num.trees = ntree,
           na.action = 'na.omit',
-          num.threads = detectCores() - 1 # Use one less core than available
+          num.threads = ncores_to_use # Use one less core than available
         )
       }))
       
@@ -494,7 +489,6 @@ ComputeClassficationAccuracy <- function(file_format = file_format) {
            file_name = "../output_data/TrainingSample-gaccuracy",
            file_format = file_format)
   
-  stopCluster(cl)
 }
 # system.time(ComputeClassficationAccuracy(file_format = "parquet"))
 # user    system   elapsed 
