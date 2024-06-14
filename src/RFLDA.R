@@ -14,7 +14,6 @@
 ###########################################20191226 IRFMDA ###################################################
 ###########################################20191226 load R packages ##########################################
 library(openxlsx)
-library(randomForest)
 library(ROCR)
 library(plyr)
 library(writexl)
@@ -757,7 +756,7 @@ Predict <- function(file_format) {
            file_name = "../output_data/UnlabeledSampleScore-300-features",
            file_format = file_format)
 }
-# system.time(Predict(file_format = "parquet"))
+system.time(Predict(file_format = "parquet"))
 # user  system elapsed 
 # 46.474   1.037   5.311 
 ################################################################################################################
