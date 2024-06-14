@@ -620,11 +620,13 @@ system.time(FiveFoldCrossingValidation(file_type="parquet"))
 
 ################################### predict all lncRNA-disease samples with 300 features#######################
 Predict <- function(file_type) {
-  ### read variable importance score of each feature
-  fs <- read.xlsx("../output_data/FeatureScore.xlsx", sheet = 1, colNames = FALSE)
-  
   ### read training sample set consisting of 5394 lncRNA-disease pairs (5394*(3+1952))
-  B <- read.xlsx("../output_data/TrainingSample.xlsx", sheet = 1, colNames = FALSE)
+  # B <- read.xlsx("../output_data/TrainingSample.xlsx", sheet = 1, colNames = FALSE)
+  B <- LoadData(file_name="../output_data/TrainingSample", file_format=file_format)
+  ### read variable importance score of each feature
+  # fs <- read.xlsx("../output_data/FeatureScore.xlsx", sheet = 1, colNames = FALSE)
+  fs <- LoadData(file_name="../output_data/FeatureScore", file_format=file_format)
+  
   ### extract subset consisting of top 300 featues
   tt <- 300
   ttt <- fs[1:tt,1]
@@ -634,7 +636,9 @@ Predict <- function(file_type) {
   TB <- cbind(B2, B1)   
   
   ### read unlabeld sample set consisting of 96183 lncRNA-disease pairs ((98880-2697=96183)*(3+1952=1955))
-  BB <- read.xlsx("../output_data/UnlabeledSample.xlsx", sheet = 1, colNames = FALSE)
+  # BB <- read.xlsx("../output_data/UnlabeledSample.xlsx", sheet = 1, colNames = FALSE)
+  BB <- LoadData(file_name="../output_data/UnlabeledSample", file_format=file_format)
+  
   ### extract subset consisting of top 300 featues
   tt <- 300
   ttt <- fs[1:tt,1]
@@ -666,7 +670,8 @@ Predict <- function(file_type) {
   pred <- predict(rf, NB)$predictions
   NB1 <- BB[,1:3]
   UnlabeledSampleScore <- cbind(NB1, data.frame(pred))
-  write_xlsx(UnlabeledSampleScore, "../output_data/UnlabeledSampleScore-300-features.xlsx", col_names = FALSE, use_zip64 = TRUE)
+  # write_xlsx(UnlabeledSampleScore, "../output_data/UnlabeledSampleScore-300-features.xlsx", col_names = FALSE, use_zip64 = TRUE)
+  SaveData(df=UnlabeledSampleScore, file_name="../output_data/UnlabeledSampleScore-300-features", file_format=file_format)
 }
 Predict(file_type="parquet")
 ################################################################################################################
