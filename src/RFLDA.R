@@ -19,7 +19,7 @@ library(plyr)
 library(writexl)
 library(ranger)
 library(doParallel)
-library(foreach)
+#library(foreach)
 library(sqldf)
 library(arrow, warn.conflicts = FALSE)
 ##############################################################################################################
@@ -285,32 +285,13 @@ ComputeFeatureImportance <- function(file_format) {
                                file_format)
   B1 <- subset(TrainingSample[, ], select = -(X2:X3))
   
-  ### train RandomForest model with parameter mtry=1952/3
-  # rf <- randomForest(X1~.,data = B1,mtry=651, importance = TRUE, ntree=500, na.action=na.omit)
-  #
-  # Train the random forest using ranger
-  rf <- ranger(
-    X1 ~ .,
-    data = B1,
-    mtry = 651,
-    importance = 'impurity',
-    # Use 'impurity' for Gini importance or 'permutation' for permutation importance
-    num.trees = 500,
-    na.action = 'na.omit',
-    num.threads = ncores_to_use
-  )
+  # Used to store feature importance by model
+  im <- NULL
   
+  set.seed(1234)
   
-  ### get variable importance score
-  # NOTE by SRM!
-  # code below throws error since there is just one row returned
-  # from the code t(round(importance(rf),3))
-  #
-  # im <- t(round(importance(rf),3))[2,]
-  im <- t(round(importance(rf), 3))[1, ]
-  
-  ### repeat 9 times
-  for (i in 2:10)
+  ### repeat 10 times
+  for (i in 1:10)
   {
     ### train RandomForest model with parameter mtry=1952/3
     # rf <- randomForest(X1~.,data = B1,mtry=651, importance = TRUE, ntree=500, na.action=na.omit)
@@ -331,7 +312,12 @@ ComputeFeatureImportance <- function(file_format) {
     # from the code t(round(importance(rf),3))
     #
     # im <- im + t(round(importance(rf),3))[2,]
-    im <- im + t(round(importance(rf), 3))[1, ]
+    if (is.null(im)) {
+      im <- t(round(importance(rf), 3))[1, ]
+    }
+    else {
+      im <- im + t(round(importance(rf), 3))[1, ]
+    }
   }
   
   ### compute average variable importance score of 10 runnings
@@ -348,7 +334,7 @@ ComputeFeatureImportance <- function(file_format) {
            file_format = file_format)
 }
 
-# system.time(ComputeFeatureImportance(file_format = "parquet"))
+system.time(ComputeFeatureImportance(file_format = "parquet"))
 # user   system  elapsed 
 # 3345.435    2.353  188.555 
 ##############################################################################################################
