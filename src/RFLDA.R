@@ -431,11 +431,13 @@ system.time(ComputeClassficationAccuracy(file_format="parquet"))
 ### 5-fold crossing validation
 FiveFoldCrossingValidation <- function(file_type){
   
-  ### read variable importance score of each feature
-  fs <- read.xlsx("../output_data/FeatureScore.xlsx", sheet = 1, colNames = FALSE)
-  
   ### read training sample set consisting of 5394 lncRNA-disease pairs (5394*(3+1952))
-  B <- read.xlsx("../output_data/TrainingSample.xlsx", sheet = 1, colNames = FALSE)
+  # B <- read.xlsx("../output_data/TrainingSample.xlsx", sheet = 1, colNames = FALSE)
+  B <- LoadData(file_name="../output_data/TrainingSample", file_format=file_format)
+  ### read variable importance score of each feature
+  # fs <- read.xlsx("../output_data/FeatureScore.xlsx", sheet = 1, colNames = FALSE)
+  fs <- LoadData(file_name="../output_data/FeatureScore", file_format=file_format)
+  
   ### extract subset consisting of top 300 featues
   tt <- 300
   ttt <- fs[1:tt,1]
@@ -445,7 +447,9 @@ FiveFoldCrossingValidation <- function(file_type){
   TB <- cbind(B2, B1)   
   
   ### read unlabeld sample set consisting of 96183 lncRNA-disease pairs ((98880-2697=96183)*(3+1952=1955))
-  BB <- read.xlsx("../output_data/UnlabeledSample.xlsx", sheet = 1, colNames = FALSE)
+  # BB <- read.xlsx("../output_data/UnlabeledSample.xlsx", sheet = 1, colNames = FALSE)
+  BB <- LoadData(file_name="../output_data/UnlabeledSample", file_format=file_format)
+  
   ### extract subset consisting of top 300 featues
   tt <- 300
   ttt <- fs[1:tt,1]
