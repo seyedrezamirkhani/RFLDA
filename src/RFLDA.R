@@ -267,7 +267,10 @@ PrepareData <- function(file_format)
                                file_format)
 }
 
-system.time(PrepareData(file_format = "parquet"))
+# system.time(PrepareData(file_format = "parquet"))
+
+# user  system elapsed 
+# 179.677  15.908 183.646 
 ##############################################################################################################
 
 
@@ -345,7 +348,10 @@ ComputeFeatureImportance <- function(file_format) {
            file_name = "../output_data/FeatureScore",
            file_format = file_format)
 }
-system.time(ComputeFeatureImportance(file_format = "parquet"))
+
+# system.time(ComputeFeatureImportance(file_format = "parquet"))
+# user   system  elapsed 
+# 3345.435    2.353  188.555 
 ##############################################################################################################
 
 
@@ -491,7 +497,9 @@ ComputeClassficationAccuracy <- function(file_format = file_format) {
   
   stopCluster(cl)
 }
-system.time(ComputeClassficationAccuracy(file_format = "parquet"))
+# system.time(ComputeClassficationAccuracy(file_format = "parquet"))
+# user    system   elapsed 
+# 51328.563    32.864  3050.017 
 ##############################################################################################################
 
 
@@ -499,7 +507,7 @@ system.time(ComputeClassficationAccuracy(file_format = "parquet"))
 ########################## 5-fold crossing validation on training sample set with 300 features ###############
 
 ### 5-fold crossing validation
-FiveFoldCrossingValidation <- function(file_type) {
+FiveFoldCrossingValidation <- function(file_format) {
   ### read training sample set consisting of 5394 lncRNA-disease pairs (5394*(3+1952))
   # B <- read.xlsx("../output_data/TrainingSample.xlsx", sheet = 1, colNames = FALSE)
   B <- LoadData(file_name = "../output_data/TrainingSample", file_format =
@@ -683,13 +691,15 @@ FiveFoldCrossingValidation <- function(file_type) {
   sumap <- sumap / 5
   print(sumap)
 }
-system.time(FiveFoldCrossingValidation(file_type = "parquet"))
+# system.time(FiveFoldCrossingValidation(file_format = "parquet"))
+# user  system elapsed 
+# 193.168   4.086  23.835 
 ##############################################################################################################
 
 
 
 ################################### predict all lncRNA-disease samples with 300 features#######################
-Predict <- function(file_type) {
+Predict <- function(file_format) {
   ### read training sample set consisting of 5394 lncRNA-disease pairs (5394*(3+1952))
   # B <- read.xlsx("../output_data/TrainingSample.xlsx", sheet = 1, colNames = FALSE)
   B <- LoadData(file_name = "../output_data/TrainingSample", file_format =
@@ -747,6 +757,7 @@ Predict <- function(file_type) {
            file_name = "../output_data/UnlabeledSampleScore-300-features",
            file_format = file_format)
 }
-system.time(Predict(file_type = "parquet"))
-
+# system.time(Predict(file_format = "parquet"))
+# user  system elapsed 
+# 46.474   1.037   5.311 
 ################################################################################################################
