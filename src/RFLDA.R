@@ -274,15 +274,16 @@ PrepareData <- function(file_format)
 
 
 
-########################### compute variable importance score using RandonForest #############################
+########################### compute variable importance score using Random Forest #############################
 
 ### compute variable importance score
 ComputeFeatureImportance <- function(file_format) {
   ncores_to_use <- detectCores() - 1 # Use one less core than available for parallel processing
   
   ### read training sample set
-  TrainingSample <- LoadData(file_name = "../output_data/TrainingSample", file_format =
-                               file_format)
+  TrainingSample <- LoadData(file_name = "../output_data/TrainingSample", file_format = file_format)
+  
+  # Remove lncRNA and Disease columns
   B1 <- subset(TrainingSample[, ], select = -(X2:X3))
   
   # Used to store feature importance by model
@@ -294,7 +295,6 @@ ComputeFeatureImportance <- function(file_format) {
   for (i in 1:10)
   {
     ### train RandomForest model with parameter mtry=1952/3
-    # rf <- randomForest(X1~.,data = B1,mtry=651, importance = TRUE, ntree=500, na.action=na.omit)
     # Train the random forest using ranger
     rf <- ranger(
       X1 ~ .,
@@ -307,11 +307,6 @@ ComputeFeatureImportance <- function(file_format) {
       num.threads = ncores_to_use
     )
     ### accumulate variable importance score
-    # NOTE by SRM!
-    # code below throws error since there is just one row returned
-    # from the code t(round(importance(rf),3))
-    #
-    # im <- im + t(round(importance(rf),3))[2,]
     if (is.null(im)) {
       im <- t(round(importance(rf), 3))[1, ]
     }
@@ -328,13 +323,12 @@ ComputeFeatureImportance <- function(file_format) {
   
   ### store feature names and correspongding variable importance score
   fs <- data.frame(attr(fsort, "names"), fsort)
-  # write_xlsx(fs, "FeatureScore.xlsx", col_names = FALSE, use_zip64 = TRUE)
   SaveData(df = fs,
            file_name = "../output_data/FeatureScore",
            file_format = file_format)
 }
 
-system.time(ComputeFeatureImportance(file_format = "parquet"))
+# system.time(ComputeFeatureImportance(file_format = "parquet"))
 # user   system  elapsed 
 # 3345.435    2.353  188.555 
 ##############################################################################################################
