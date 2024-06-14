@@ -756,7 +756,7 @@ Predict <- function(file_format) {
            file_name = "../output_data/UnlabeledSampleScore-300-features",
            file_format = file_format)
 }
-system.time(Predict(file_format = "parquet"))
+# system.time(Predict(file_format = "parquet"))
 # user  system elapsed 
 # 46.474   1.037   5.311 
 ################################################################################################################
