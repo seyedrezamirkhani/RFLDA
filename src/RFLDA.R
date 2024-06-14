@@ -292,11 +292,13 @@ system.time(ComputeFeatureImportance(file_format="parquet"))
 
 ############# training RandomForest model with top 50, 100, ..., 1950 features ###############################
 
-ComputeClassficationAccuracy<-function(){
+ComputeClassficationAccuracy<-function(file_format=file_format){
   ### read training sample set consisting of 5394 lncRNA-disease pairs (5394*(3+1952))
-  B <- read.xlsx("../output_data/TrainingSample.xlsx", sheet = 1, colNames = FALSE)
+  # B <- read.xlsx("../output_data/TrainingSample.xlsx", sheet = 1, colNames = FALSE)
+  B <- LoadData(file_name="../output_data/TrainingSample", file_format=file_format)
   ### read variable importance score of each feature
-  fs <- read.xlsx("../output_data/FeatureScore.xlsx", sheet = 1, colNames = FALSE)
+  # fs <- read.xlsx("../output_data/FeatureScore.xlsx", sheet = 1, colNames = FALSE)
+  fs <- LoadData(file_name="../output_data/FeatureScore", file_format=file_format)
   
   
   # Set up parallel backend
@@ -414,11 +416,12 @@ ComputeClassficationAccuracy<-function(){
       print(tt)
   }
   gaccuracy <- data.frame(gaccuracy)
-  write_xlsx(gaccuracy, "../output_data/TrainingSample-gaccuracy.xlsx", col_names = FALSE, use_zip64 = TRUE)
+  # write_xlsx(gaccuracy, "../output_data/TrainingSample-gaccuracy.xlsx", col_names = FALSE, use_zip64 = TRUE)
+  SaveData(df=gaccuracy, file_name="../output_data/TrainingSample-gaccuracy", file_format=file_format)
   
   stopCluster(cl)
 }
-system.time(ComputeClassficationAccuracy())
+system.time(ComputeClassficationAccuracy(file_format="parquet"))
 ##############################################################################################################
 
 
