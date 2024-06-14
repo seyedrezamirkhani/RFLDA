@@ -673,5 +673,5 @@ Predict <- function(file_type) {
   # write_xlsx(UnlabeledSampleScore, "../output_data/UnlabeledSampleScore-300-features.xlsx", col_names = FALSE, use_zip64 = TRUE)
   SaveData(df=UnlabeledSampleScore, file_name="../output_data/UnlabeledSampleScore-300-features", file_format=file_format)
 }
-Predict(file_type="parquet")
+system.time(Predict(file_type="parquet"))
 ################################################################################################################
