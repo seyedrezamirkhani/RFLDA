@@ -427,121 +427,56 @@ system.time(ComputeClassficationAccuracy(file_format="parquet"))
 
 
 ########################## 5-fold crossing validation on training sample set with 300 features ###############
-### read variable importance score of each feature
-fs <- read.xlsx("../output_data/FeatureScore.xlsx", sheet = 1, colNames = FALSE)
-
-### read training sample set consisting of 5394 lncRNA-disease pairs (5394*(3+1952))
-B <- read.xlsx("../output_data/TrainingSample.xlsx", sheet = 1, colNames = FALSE)
-### extract subset consisting of top 300 featues
-tt <- 300
-ttt <- fs[1:tt,1]
-B1 <- subset(B[,], select=ttt)
-B2 <- subset(B[,], select=X1)
-### TB is training sample set without column X2（lncRNA name）and X3（disease name）
-TB <- cbind(B2, B1)   
-
-### read unlabeld sample set consisting of 96183 lncRNA-disease pairs ((98880-2697=96183)*(3+1952=1955))
-BB <- read.xlsx("../output_data/UnlabeledSample.xlsx", sheet = 1, colNames = FALSE)
-### extract subset consisting of top 300 featues
-tt <- 300
-ttt <- fs[1:tt,1]
-B1 <- subset(BB[,], select=ttt)
-B2 <- subset(BB[,], select=X1)
-### NB is unlabeled sample set without column X2（lncRNA name）and X3（disease name）
-NB <- cbind(B2, B1)   
 
 ### 5-fold crossing validation
-FiveFoldCrossingValidation <- function(){
-    sumauc <- 0
-    sumap <- 0
-    PTB <- TB[1:2697,]
-    # NOTE: SRM
-    # Rows 5393 and 5394 do not exist in TB
-    # It only has 5392 rows so the code below results in NULLS which causes
-    # problems when the model is being created
-    # To fix it, we use nrow on TB instead
-    # NTB <- TB[2698:5394,]
-    NTB <- TB[2698:nrow(TB),]
-    
-
-    for(i in 1:4)
-    {
-	### training sample set
-        PTB1 <- PTB[-(((540*(i-1))+1):(540*i)),]
-        NTB1 <- NTB[-(((540*(i-1))+1):(540*i)),]
-        TrainB <- rbind(PTB1, NTB1)
-                
-        ### test sample set
-        PTB2 <- PTB[(((540*(i-1))+1):(540*i)),]
-        TestB <- rbind(PTB2,NB)
-        
-        ### train RandomForest Model with parameter，try=the number of features（300）/3
-        # rf=randomForest(X1~.,data = TrainB, mtry=100, importance = TRUE, ntree=500, na.action=na.omit)
-        # switching to ranger as it supports parallel processing
-        ntree <- 500
-        mtry_value <- (300 / 3)
-        print(
-          system.time({
-            rf <- ranger(
-              X1 ~ .,
-              data = TrainB,
-              mtry = mtry_value,
-              importance = 'impurity', # Use 'impurity' or 'permutation' for ranger importance
-              num.trees = ntree,
-              na.action = 'na.omit',
-              num.threads = detectCores() - 1 # Use one less core than available
-            )
-          })
-        )
+FiveFoldCrossingValidation <- function(file_type){
   
-        ### predict using RandomForest Model
-        pred <- predict(rf, TestB)$predictions
-        
-        pred1 <- prediction(pred, TestB$X1)
+  ### read variable importance score of each feature
+  fs <- read.xlsx("../output_data/FeatureScore.xlsx", sheet = 1, colNames = FALSE)
+  
+  ### read training sample set consisting of 5394 lncRNA-disease pairs (5394*(3+1952))
+  B <- read.xlsx("../output_data/TrainingSample.xlsx", sheet = 1, colNames = FALSE)
+  ### extract subset consisting of top 300 featues
+  tt <- 300
+  ttt <- fs[1:tt,1]
+  B1 <- subset(B[,], select=ttt)
+  B2 <- subset(B[,], select=X1)
+  ### TB is training sample set without column X2（lncRNA name）and X3（disease name）
+  TB <- cbind(B2, B1)   
+  
+  ### read unlabeld sample set consisting of 96183 lncRNA-disease pairs ((98880-2697=96183)*(3+1952=1955))
+  BB <- read.xlsx("../output_data/UnlabeledSample.xlsx", sheet = 1, colNames = FALSE)
+  ### extract subset consisting of top 300 featues
+  tt <- 300
+  ttt <- fs[1:tt,1]
+  B1 <- subset(BB[,], select=ttt)
+  B2 <- subset(BB[,], select=X1)
+  ### NB is unlabeled sample set without column X2（lncRNA name）and X3（disease name）
+  NB <- cbind(B2, B1) 
+  
+  sumauc <- 0
+  sumap <- 0
+  PTB <- TB[1:2697,]
+  # NOTE: SRM
+  # Rows 5393 and 5394 do not exist in TB
+  # It only has 5392 rows so the code below results in NULLS which causes
+  # problems when the model is being created
+  # To fix it, we use nrow on TB instead
+  # NTB <- TB[2698:5394,]
+  NTB <- TB[2698:nrow(TB),]
+  
 
-        ### computing a simple ROC curve (x-axis: fpr, y-axis: tpr)
-        ### roc <- performance(pred1, "tpr", "fpr")
-        ### plot(roc, main = "ROC chart")
-        
-	### compute AUC value    
-        auc <- performance(pred1, "auc")@y.values
-        print(auc)
-        sumauc <- sumauc + as.numeric(auc[[1]])
-
-        ### draw ROC precision/recall curve (x-axis: recall, y-axis: precision)
-	### perf1 <- performance(pred1, "prec", "rec")
-	### plot(perf1)
-        
-        ### compute AUPR valute 
-        prec <- performance(pred1, "prec")@y.values
-        rec <- performance(pred1, "rec")@y.values
-        ap <-0
-        cur_rec <- rec[[1]][2]
-        cur_prec <- prec[[1]][2]     
-        for (j in 3:length(rec[[1]])) {
-          if(prec[[1]][j] >= cur_prec)
-          {
-            cur_prec = prec[[1]][j]
-          }
-          if (abs(cur_rec - rec[[1]][j]) > 0) {
-           ap = ap + cur_prec * abs(cur_rec - rec[[1]][j])
-          }
-          cur_rec = rec[[1]][j]
-       }
-       print(ap)
-       sumap <- sumap + ap
-    }
-      
-      i <- 5
-      ### training sample set
-      PTB1 <- PTB[-(((540*(i-1))+1):2697),]
-      NTB1 <- NTB[-(((540*(i-1))+1):2697),]
+  for(i in 1:4)
+  {
+### training sample set
+      PTB1 <- PTB[-(((540*(i-1))+1):(540*i)),]
+      NTB1 <- NTB[-(((540*(i-1))+1):(540*i)),]
       TrainB <- rbind(PTB1, NTB1)
-        
+              
       ### test sample set
-      PTB2 <- PTB[(((540*(i-1))+1):2697),]
+      PTB2 <- PTB[(((540*(i-1))+1):(540*i)),]
       TestB <- rbind(PTB2,NB)
-     
+      
       ### train RandomForest Model with parameter，try=the number of features（300）/3
       # rf=randomForest(X1~.,data = TrainB, mtry=100, importance = TRUE, ntree=500, na.action=na.omit)
       # switching to ranger as it supports parallel processing
@@ -560,31 +495,24 @@ FiveFoldCrossingValidation <- function(){
           )
         })
       )
-  
+
       ### predict using RandomForest Model
-      # NOTE! SRM
-      # This was used with RandomForest object
-      # pred <- predict(rf, TestB)
-      # the prediction function of ranger object returns more objects
-      # however we only need the predictions hence the code change below
       pred <- predict(rf, TestB)$predictions
-        
+      
       pred1 <- prediction(pred, TestB$X1)
 
-      ### draw ROC curve
+      ### computing a simple ROC curve (x-axis: fpr, y-axis: tpr)
       ### roc <- performance(pred1, "tpr", "fpr")
       ### plot(roc, main = "ROC chart")
-
-      ### compute AUC valute    
+      
+### compute AUC value    
       auc <- performance(pred1, "auc")@y.values
       print(auc)
       sumauc <- sumauc + as.numeric(auc[[1]])
-      sumauc <- sumauc/5
-      print(sumauc)
 
       ### draw ROC precision/recall curve (x-axis: recall, y-axis: precision)
-      ### perf1 <- performance(pred1, "prec", "rec")
-      ### plot(perf1)
+### perf1 <- performance(pred1, "prec", "rec")
+### plot(perf1)
       
       ### compute AUPR valute 
       prec <- performance(pred1, "prec")@y.values
@@ -593,21 +521,95 @@ FiveFoldCrossingValidation <- function(){
       cur_rec <- rec[[1]][2]
       cur_prec <- prec[[1]][2]     
       for (j in 3:length(rec[[1]])) {
-          if(prec[[1]][j] >= cur_prec)
-          {
-            cur_prec = prec[[1]][j]
-          }
-          if (abs(cur_rec - rec[[1]][j]) > 0) {
-           ap = ap + cur_prec * abs(cur_rec - rec[[1]][j])
-          }
-          cur_rec = rec[[1]][j]
+        if(prec[[1]][j] >= cur_prec)
+        {
+          cur_prec = prec[[1]][j]
+        }
+        if (abs(cur_rec - rec[[1]][j]) > 0) {
+         ap = ap + cur_prec * abs(cur_rec - rec[[1]][j])
+        }
+        cur_rec = rec[[1]][j]
      }
      print(ap)
      sumap <- sumap + ap
-     sumap <- sumap/5
-     print(sumap)
+  }
+    
+    i <- 5
+    ### training sample set
+    PTB1 <- PTB[-(((540*(i-1))+1):2697),]
+    NTB1 <- NTB[-(((540*(i-1))+1):2697),]
+    TrainB <- rbind(PTB1, NTB1)
+      
+    ### test sample set
+    PTB2 <- PTB[(((540*(i-1))+1):2697),]
+    TestB <- rbind(PTB2,NB)
+   
+    ### train RandomForest Model with parameter，try=the number of features（300）/3
+    # rf=randomForest(X1~.,data = TrainB, mtry=100, importance = TRUE, ntree=500, na.action=na.omit)
+    # switching to ranger as it supports parallel processing
+    ntree <- 500
+    mtry_value <- (300 / 3)
+    print(
+      system.time({
+        rf <- ranger(
+          X1 ~ .,
+          data = TrainB,
+          mtry = mtry_value,
+          importance = 'impurity', # Use 'impurity' or 'permutation' for ranger importance
+          num.trees = ntree,
+          na.action = 'na.omit',
+          num.threads = detectCores() - 1 # Use one less core than available
+        )
+      })
+    )
+
+    ### predict using RandomForest Model
+    # NOTE! SRM
+    # This was used with RandomForest object
+    # pred <- predict(rf, TestB)
+    # the prediction function of ranger object returns more objects
+    # however we only need the predictions hence the code change below
+    pred <- predict(rf, TestB)$predictions
+      
+    pred1 <- prediction(pred, TestB$X1)
+
+    ### draw ROC curve
+    ### roc <- performance(pred1, "tpr", "fpr")
+    ### plot(roc, main = "ROC chart")
+
+    ### compute AUC valute    
+    auc <- performance(pred1, "auc")@y.values
+    print(auc)
+    sumauc <- sumauc + as.numeric(auc[[1]])
+    sumauc <- sumauc/5
+    print(sumauc)
+
+    ### draw ROC precision/recall curve (x-axis: recall, y-axis: precision)
+    ### perf1 <- performance(pred1, "prec", "rec")
+    ### plot(perf1)
+    
+    ### compute AUPR valute 
+    prec <- performance(pred1, "prec")@y.values
+    rec <- performance(pred1, "rec")@y.values
+    ap <-0
+    cur_rec <- rec[[1]][2]
+    cur_prec <- prec[[1]][2]     
+    for (j in 3:length(rec[[1]])) {
+        if(prec[[1]][j] >= cur_prec)
+        {
+          cur_prec = prec[[1]][j]
+        }
+        if (abs(cur_rec - rec[[1]][j]) > 0) {
+         ap = ap + cur_prec * abs(cur_rec - rec[[1]][j])
+        }
+        cur_rec = rec[[1]][j]
+   }
+   print(ap)
+   sumap <- sumap + ap
+   sumap <- sumap/5
+   print(sumap)
 }
-system.time(FiveFoldCrossingValidation())
+system.time(FiveFoldCrossingValidation(file_type="parquet"))
 ##############################################################################################################
 
 
