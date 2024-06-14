@@ -16,7 +16,7 @@ this issue, writexl is used instead.
 
 3 - The original code converted LDA into a matrix which is a bug as this dataframe contains two columns of text. 
 
-4 - Changed generation of labels for LDExcl0 to use sqldf instead of nested loops resulting in x60 improvement in speed.
+4 - Changed generation of labels for LDExcl0 to use sqldf instead of nested loops resulting in 60x improvement in speed.
 
 5 - Switched from RandomForest library to ranger as it support usage of multiple processor cores.
 
