@@ -618,52 +618,55 @@ system.time(FiveFoldCrossingValidation(file_type="parquet"))
 
 
 
-################################### predict all lncRNA-disease samples with 300 fearues#######################
-### read variable importance score of each feature
-fs <- read.xlsx("../output_data/FeatureScore.xlsx", sheet = 1, colNames = FALSE)
-
-### read training sample set consisting of 5394 lncRNA-disease pairs (5394*(3+1952))
-B <- read.xlsx("../output_data/TrainingSample.xlsx", sheet = 1, colNames = FALSE)
-### extract subset consisting of top 300 featues
-tt <- 300
-ttt <- fs[1:tt,1]
-B1 <- subset(B[,], select=ttt)
-B2 <- subset(B[,], select=X1)
-### TB is training sample set without column X2（lncRNA name）and X3（disease name）
-TB <- cbind(B2, B1)   
-
-### read unlabeld sample set consisting of 96183 lncRNA-disease pairs ((98880-2697=96183)*(3+1952=1955))
-BB <- read.xlsx("../output_data/UnlabeledSample.xlsx", sheet = 1, colNames = FALSE)
-### extract subset consisting of top 300 featues
-tt <- 300
-ttt <- fs[1:tt,1]
-B1 <- subset(BB[,], select=ttt)
-B2 <- subset(BB[,], select=X1)
-### NB is unlabeled sample set without column X2（lncRNA name）and X3（disease name）
-NB <- cbind(B2, B1)   
-
-### train RandomForest Model with parameter，try=the number of features（300）/3
-# rf=randomForest(X1~.,data = TB, mtry=100, importance = TRUE, ntree=500, na.action=na.omit)
-# switching to ranger as it supports parallel processing
-ntree <- 500
-mtry_value <- (300 / 3)
-print(
-  system.time({
-    rf <- ranger(
-      X1 ~ .,
-      data = TB,
-      mtry = mtry_value,
-      importance = 'impurity', # Use 'impurity' or 'permutation' for ranger importance
-      num.trees = ntree,
-      na.action = 'na.omit',
-      num.threads = detectCores() - 1 # Use one less core than available
-    )
-  })
-)
+################################### predict all lncRNA-disease samples with 300 features#######################
+Predict <- function(file_type) {
+  ### read variable importance score of each feature
+  fs <- read.xlsx("../output_data/FeatureScore.xlsx", sheet = 1, colNames = FALSE)
   
-### predict all unknwon samples using RandomForest Model
-pred <- predict(rf, NB)$predictions
-NB1 <- BB[,1:3]
-UnlabeledSampleScore <- cbind(NB1, data.frame(pred))
-write_xlsx(UnlabeledSampleScore, "../output_data/UnlabeledSampleScore-300-features.xlsx", col_names = FALSE, use_zip64 = TRUE)
+  ### read training sample set consisting of 5394 lncRNA-disease pairs (5394*(3+1952))
+  B <- read.xlsx("../output_data/TrainingSample.xlsx", sheet = 1, colNames = FALSE)
+  ### extract subset consisting of top 300 featues
+  tt <- 300
+  ttt <- fs[1:tt,1]
+  B1 <- subset(B[,], select=ttt)
+  B2 <- subset(B[,], select=X1)
+  ### TB is training sample set without column X2（lncRNA name）and X3（disease name）
+  TB <- cbind(B2, B1)   
+  
+  ### read unlabeld sample set consisting of 96183 lncRNA-disease pairs ((98880-2697=96183)*(3+1952=1955))
+  BB <- read.xlsx("../output_data/UnlabeledSample.xlsx", sheet = 1, colNames = FALSE)
+  ### extract subset consisting of top 300 featues
+  tt <- 300
+  ttt <- fs[1:tt,1]
+  B1 <- subset(BB[,], select=ttt)
+  B2 <- subset(BB[,], select=X1)
+  ### NB is unlabeled sample set without column X2（lncRNA name）and X3（disease name）
+  NB <- cbind(B2, B1)   
+  
+  ### train RandomForest Model with parameter，try=the number of features（300）/3
+  # rf=randomForest(X1~.,data = TB, mtry=100, importance = TRUE, ntree=500, na.action=na.omit)
+  # switching to ranger as it supports parallel processing
+  ntree <- 500
+  mtry_value <- (300 / 3)
+  print(
+    system.time({
+      rf <- ranger(
+        X1 ~ .,
+        data = TB,
+        mtry = mtry_value,
+        importance = 'impurity', # Use 'impurity' or 'permutation' for ranger importance
+        num.trees = ntree,
+        na.action = 'na.omit',
+        num.threads = detectCores() - 1 # Use one less core than available
+      )
+    })
+  )
+    
+  ### predict all unknwon samples using RandomForest Model
+  pred <- predict(rf, NB)$predictions
+  NB1 <- BB[,1:3]
+  UnlabeledSampleScore <- cbind(NB1, data.frame(pred))
+  write_xlsx(UnlabeledSampleScore, "../output_data/UnlabeledSampleScore-300-features.xlsx", col_names = FALSE, use_zip64 = TRUE)
+}
+Predict(file_type="parquet")
 ################################################################################################################
