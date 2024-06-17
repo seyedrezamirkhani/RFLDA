@@ -436,7 +436,7 @@ ComputeClassficationAccuracy <- function(file_format = file_format) {
 
 
 ########################## 5-fold crossing validation on training sample set with 300 features ###############
-
+# SRM TODO: Merge code into single loop block to avoid code duplication
 ### 5-fold crossing validation
 FiveFoldCrossingValidation <- function(file_format) {
   ### read training sample set consisting of 5394 lncRNA-disease pairs (5394*(3+1952))
@@ -513,8 +513,8 @@ FiveFoldCrossingValidation <- function(file_format) {
     pred1 <- prediction(pred, TestB$X1)
     
     ### computing a simple ROC curve (x-axis: fpr, y-axis: tpr)
-    ### roc <- performance(pred1, "tpr", "fpr")
-    ### plot(roc, main = "ROC chart")
+    roc <- performance(pred1, "tpr", "fpr")
+    plot(roc, main = "ROC chart")
     
     ### compute AUC value
     auc <- performance(pred1, "auc")@y.values
@@ -522,8 +522,8 @@ FiveFoldCrossingValidation <- function(file_format) {
     sumauc <- sumauc + as.numeric(auc[[1]])
     
     ### draw ROC precision/recall curve (x-axis: recall, y-axis: precision)
-    ### perf1 <- performance(pred1, "prec", "rec")
-    ### plot(perf1)
+    perf1 <- performance(pred1, "prec", "rec")
+    plot(perf1)
     
     ### compute AUPR valute
     prec <- performance(pred1, "prec")@y.values
@@ -584,8 +584,8 @@ FiveFoldCrossingValidation <- function(file_format) {
   pred1 <- prediction(pred, TestB$X1)
   
   ### draw ROC curve
-  ### roc <- performance(pred1, "tpr", "fpr")
-  ### plot(roc, main = "ROC chart")
+  roc <- performance(pred1, "tpr", "fpr")
+  plot(roc, main = "ROC chart")
   
   ### compute AUC valute
   auc <- performance(pred1, "auc")@y.values
@@ -595,8 +595,8 @@ FiveFoldCrossingValidation <- function(file_format) {
   print(sumauc)
   
   ### draw ROC precision/recall curve (x-axis: recall, y-axis: precision)
-  ### perf1 <- performance(pred1, "prec", "rec")
-  ### plot(perf1)
+  perf1 <- performance(pred1, "prec", "rec")
+  plot(perf1)
   
   ### compute AUPR valute
   prec <- performance(pred1, "prec")@y.values
@@ -619,7 +619,7 @@ FiveFoldCrossingValidation <- function(file_format) {
   sumap <- sumap / 5
   print(sumap)
 }
-# system.time(FiveFoldCrossingValidation(file_format = "parquet"))
+system.time(FiveFoldCrossingValidation(file_format = "parquet"))
 # user  system elapsed 
 # 193.168   4.086  23.835 
 ##############################################################################################################
