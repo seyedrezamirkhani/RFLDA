@@ -525,7 +525,7 @@ FiveFoldCrossingValidation <- function(file_format) {
     perf1 <- performance(pred1, "prec", "rec")
     plot(perf1)
     
-    ### compute AUPR valute
+    ### compute AUPR value
     prec <- performance(pred1, "prec")@y.values
     rec <- performance(pred1, "rec")@y.values
     ap <- 0
@@ -587,7 +587,7 @@ FiveFoldCrossingValidation <- function(file_format) {
   roc <- performance(pred1, "tpr", "fpr")
   plot(roc, main = "ROC chart")
   
-  ### compute AUC valute
+  ### compute AUC value
   auc <- performance(pred1, "auc")@y.values
   print(auc)
   sumauc <- sumauc + as.numeric(auc[[1]])
@@ -598,7 +598,7 @@ FiveFoldCrossingValidation <- function(file_format) {
   perf1 <- performance(pred1, "prec", "rec")
   plot(perf1)
   
-  ### compute AUPR valute
+  ### compute AUPR value
   prec <- performance(pred1, "prec")@y.values
   rec <- performance(pred1, "rec")@y.values
   ap <- 0
