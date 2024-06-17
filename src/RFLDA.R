@@ -19,7 +19,6 @@ library(plyr)
 library(writexl)
 library(ranger)
 library(doParallel)
-#library(foreach)
 library(sqldf)
 library(arrow, warn.conflicts = FALSE)
 ##############################################################################################################
@@ -120,11 +119,9 @@ PrepareData <- function(file_format)
   d2 <- subset(LDALL, select = 1149)
   d3 <- subset(LDALL, select = c(-1, -1149))
   LDALL <- data.frame(d1, d2, d3)
-  # write_xlsx(LDALL, "lncRNA-disease-ALL.xlsx", col_names = FALSE, use_zip64 = TRUE)
   SaveData(df = LDALL,
            file_name = "../output_data/lncRNA-disease-ALL",
            file_format = file_format)
-  # LDALL <- read.xlsx("lncRNA-disease-ALL.xlsx", sheet = 1, colNames = FALSE)
   LDALL <- LoadData(file_name = "../output_data/lncRNA-disease-ALL", file_format =
                       file_format)
   
@@ -133,11 +130,9 @@ PrepareData <- function(file_format)
   d2 <- subset(LDALL, select = c(-1, -2))
   d2 <- d2[, which(colSums(d2) > 0)]
   LDExcl0 <- cbind(d1, d2)
-  # write_xlsx(LDExcl0, "lncRNA-disease-Excl0.xlsx", col_names = FALSE, use_zip64 = TRUE)
   SaveData(df = LDExcl0,
            file_name = "../output_data/lncRNA-disease-Excl0",
            file_format = file_format)
-  # LDExcl0 <- read.xlsx("lncRNA-disease-Excl0.xlsx", sheet = 1, colNames = FALSE)
   LDExcl0 <- LoadData(file_name = "../output_data/lncRNA-disease-Excl0", file_format =
                         file_format)
   
@@ -145,11 +140,9 @@ PrepareData <- function(file_format)
   xy <- which(LD[, ] == 1, arr.ind = TRUE)
   LDA <- cbind(L[xy[, 1], 1], D[xy[, 2], 1])
   LDA <- data.frame(LDA)
-  # write_xlsx(LDA, "lncRNA-disease-associations-2697.xlsx", col_names = FALSE, use_zip64 = TRUE)
   SaveData(df = LDA,
            file_name = "../output_data/lncRNA-disease-associations-2697",
            file_format = file_format)
-  # LDA <- read.xlsx("lncRNA-disease-associations-2697.xlsx", sheet = 1, colNames = FALSE)
   LDA <- LoadData(file_name = "../output_data/lncRNA-disease-associations-2697", file_format =
                     file_format)
   
@@ -168,28 +161,6 @@ PrepareData <- function(file_format)
   label.fr <- data.frame("label" = c(0))
   LDExcl0 <- cbind(label.fr, LDExcl0)
   
-  # NOTE! SRM
-  # Slow original code
-  #     user   system  elapsed
-  # 5892.416  211.509 6133.079
-  #
-  #system.time(
-  #for (i in 1:nrow(LDExcl0))
-  #{
-  #  for (j in 1:nrow(LDA))
-  #  {
-  #    if((LDExcl0[i,2] == LDA[j,1]) && (LDExcl0[i,3] == LDA[j,2]))
-  #    {
-  #      LDExcl0[i,1] <- 1
-  #    }
-  #  }
-  #}
-  #)
-  
-  # NOTE! SRM
-  # New Code Using sqldf
-  #    user  system elapsed
-  # 115.087   0.720 115.751
   system.time(LDExcl0 <- sqldf(
     c(
       '
@@ -209,31 +180,25 @@ PrepareData <- function(file_format)
   B2 <- sweep(center, 2, R, "/")
   B3 <- subset(LDExcl0[, ], select = c(label, X1, X2))
   LDExcl0 <- cbind(B3, B2)
-  # write_xlsx(LDExcl0, "lncRNA-disease-Excl0-regulation.xlsx", col_names = FALSE, use_zip64 = TRUE)
   SaveData(df = LDExcl0,
            file_name = "../output_data/lncRNA-disease-Excl0-regulation",
            file_format = file_format)
-  # LDExcl0 <- read.xlsx("lncRNA-disease-Excl0-regulation.xlsx", sheet = 1, colNames = FALSE)
   LDExcl0 <- LoadData(file_name = "../output_data/lncRNA-disease-Excl0-regulation", file_format =
                         file_format)
   
   ### consturct positive samples (2697*1955)
   PositiveSample <- LDExcl0[LDExcl0[, 1] == 1, ]
-  # write_xlsx(PositiveSample, "PositiveSample.xlsx", col_names = FALSE, use_zip64 = TRUE)
   SaveData(df = PositiveSample,
            file_name = "../output_data/PositiveSample",
            file_format = file_format)
-  # PositiveSample <- read.xlsx("PositiveSample.xlsx", sheet = 1, colNames = FALSE)
   PositiveSample <- LoadData(file_name = "../output_data/PositiveSample", file_format =
                                file_format)
   
   ### consturct unlabeled samples ((98880-2697=96183)*1955)
   UnlabeledSample <- LDExcl0[LDExcl0[, 1] == 0, ]
-  # write_xlsx(UnlabeledSample, "UnlabeledSample.xlsx", col_names = FALSE, use_zip64 = TRUE)
   SaveData(df = UnlabeledSample,
            file_name = "../output_data/UnlabeledSample",
            file_format = file_format)
-  # UnlabeledSample <- read.xlsx("UnlabeledSample.xlsx", sheet = 1, colNames = FALSE)
   UnlabeledSample <- LoadData(file_name = "../output_data/UnlabeledSample", file_format =
                                 file_format)
   
@@ -247,21 +212,17 @@ PrepareData <- function(file_format)
   )
   sps <- sort(sp)
   NegativeSample <- UnlabeledSample[sps, ]
-  # write_xlsx(NegativeSample, "NegativeSample.xlsx", col_names = FALSE, use_zip64 = TRUE)
   SaveData(df = NegativeSample,
            file_name = "../output_data/NegativeSample",
            file_format = file_format)
-  # NegativeSample <- read.xlsx("NegativeSample.xlsx", sheet = 1, colNames = FALSE)
   NegativeSample <- LoadData(file_name = "../output_data/NegativeSample", file_format =
                                file_format)
   
   ### construct training sample set by combining positive and negative samples (5394*1955)
   TrainingSample <- rbind(PositiveSample, NegativeSample)
-  # write_xlsx(TrainingSample, "TrainingSample.xlsx", col_names = FALSE, use_zip64 = TRUE)
   SaveData(df = TrainingSample,
            file_name = "../output_data/TrainingSample",
            file_format = file_format)
-  # TrainingSample <- read.xlsx("TrainingSample.xlsx", sheet = 1, colNames = FALSE)
   TrainingSample <- LoadData(file_name = "../output_data/TrainingSample", file_format =
                                file_format)
 }
@@ -339,11 +300,9 @@ ComputeFeatureImportance <- function(file_format) {
 
 ComputeClassficationAccuracy <- function(file_format = file_format) {
   ### read training sample set consisting of 5394 lncRNA-disease pairs (5394*(3+1952))
-  # B <- read.xlsx("../output_data/TrainingSample.xlsx", sheet = 1, colNames = FALSE)
   B <- LoadData(file_name = "../output_data/TrainingSample", file_format =
                   file_format)
   ### read variable importance score of each feature
-  # fs <- read.xlsx("../output_data/FeatureScore.xlsx", sheet = 1, colNames = FALSE)
   fs <- LoadData(file_name = "../output_data/FeatureScore", file_format =
                    file_format)
   
@@ -464,7 +423,6 @@ ComputeClassficationAccuracy <- function(file_format = file_format) {
     print(tt)
   }
   gaccuracy <- data.frame(gaccuracy)
-  # write_xlsx(gaccuracy, "../output_data/TrainingSample-gaccuracy.xlsx", col_names = FALSE, use_zip64 = TRUE)
   SaveData(df = gaccuracy,
            file_name = "../output_data/TrainingSample-gaccuracy",
            file_format = file_format)
@@ -482,11 +440,9 @@ ComputeClassficationAccuracy <- function(file_format = file_format) {
 ### 5-fold crossing validation
 FiveFoldCrossingValidation <- function(file_format) {
   ### read training sample set consisting of 5394 lncRNA-disease pairs (5394*(3+1952))
-  # B <- read.xlsx("../output_data/TrainingSample.xlsx", sheet = 1, colNames = FALSE)
   B <- LoadData(file_name = "../output_data/TrainingSample", file_format =
                   file_format)
   ### read variable importance score of each feature
-  # fs <- read.xlsx("../output_data/FeatureScore.xlsx", sheet = 1, colNames = FALSE)
   fs <- LoadData(file_name = "../output_data/FeatureScore", file_format =
                    file_format)
   
@@ -499,7 +455,6 @@ FiveFoldCrossingValidation <- function(file_format) {
   TB <- cbind(B2, B1)
   
   ### read unlabeld sample set consisting of 96183 lncRNA-disease pairs ((98880-2697=96183)*(3+1952=1955))
-  # BB <- read.xlsx("../output_data/UnlabeledSample.xlsx", sheet = 1, colNames = FALSE)
   BB <- LoadData(file_name = "../output_data/UnlabeledSample", file_format =
                    file_format)
   
@@ -674,11 +629,9 @@ FiveFoldCrossingValidation <- function(file_format) {
 ################################### predict all lncRNA-disease samples with 300 features#######################
 Predict <- function(file_format) {
   ### read training sample set consisting of 5394 lncRNA-disease pairs (5394*(3+1952))
-  # B <- read.xlsx("../output_data/TrainingSample.xlsx", sheet = 1, colNames = FALSE)
   B <- LoadData(file_name = "../output_data/TrainingSample", file_format =
                   file_format)
   ### read variable importance score of each feature
-  # fs <- read.xlsx("../output_data/FeatureScore.xlsx", sheet = 1, colNames = FALSE)
   fs <- LoadData(file_name = "../output_data/FeatureScore", file_format =
                    file_format)
   
@@ -691,7 +644,6 @@ Predict <- function(file_format) {
   TB <- cbind(B2, B1)
   
   ### read unlabeld sample set consisting of 96183 lncRNA-disease pairs ((98880-2697=96183)*(3+1952=1955))
-  # BB <- read.xlsx("../output_data/UnlabeledSample.xlsx", sheet = 1, colNames = FALSE)
   BB <- LoadData(file_name = "../output_data/UnlabeledSample", file_format =
                    file_format)
   
@@ -725,7 +677,6 @@ Predict <- function(file_format) {
   pred <- predict(rf, NB)$predictions
   NB1 <- BB[, 1:3]
   UnlabeledSampleScore <- cbind(NB1, data.frame(pred))
-  # write_xlsx(UnlabeledSampleScore, "../output_data/UnlabeledSampleScore-300-features.xlsx", col_names = FALSE, use_zip64 = TRUE)
   SaveData(df = UnlabeledSampleScore,
            file_name = "../output_data/UnlabeledSampleScore-300-features",
            file_format = file_format)
