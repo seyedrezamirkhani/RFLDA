@@ -619,7 +619,7 @@ FiveFoldCrossingValidation <- function(file_format) {
   sumap <- sumap / 5
   print(sumap)
 }
-system.time(FiveFoldCrossingValidation(file_format = "parquet"))
+# system.time(FiveFoldCrossingValidation(file_format = "parquet"))
 # user  system elapsed 
 # 193.168   4.086  23.835 
 ##############################################################################################################
