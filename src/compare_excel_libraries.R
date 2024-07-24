@@ -4,7 +4,7 @@
 # 1. openxlsx is the faster library
 # 2. readxl trims strings in cells when it reads them
 # This results in the difference in data on row 57 of 02-diseases-412.xlsx
-# The true value is ' bone remodeling disease' with a leading space char 
+# The true value is ' bone remodeling disease' with a leading space char
 # readxl trims the value showing 'bone remodeling disease'
 # where as openxlsx does not
 #
@@ -59,9 +59,9 @@ for (f in test_file_names) {
   start_time <- Sys.time()
   df <- read.xlsx(f, sheet = 1, colNames = FALSE)
   end_time <- Sys.time()
-  
+
   openxlsx_dfs <- append(openxlsx_dfs, df)
-  
+
   duration <- as.numeric(difftime(end_time, start_time), units = "secs")
   openxlsx_times <- append(openxlsx_times, duration)
 }
@@ -71,19 +71,15 @@ read_speed_df <- data.frame(test_file_names, readxl_times, openxlsx_times)
 for (i in 1:length(test_file_names)) {
   readxl_df <- data.frame(readxl_dfs[i])
   openxlsx_df <- data.frame(openxlsx_dfs[i])
-  
+
   # make the column names the same
   colnames(readxl_df) <- colnames(openxlsx_df)
-  
-  #print(all_equal(readxl_df, openxlsx_df))
-  
+
+  # print(all_equal(readxl_df, openxlsx_df))
+
   if (isTRUE(all.equal(readxl_df, openxlsx_df)) == FALSE) {
-    print("NOT EQUAL")  
+    print("NOT EQUAL")
     print(c("index", i, "filename", test_file_names[i]))
     print(diffdf(readxl_df, openxlsx_df))
   }
 }
-
-
-
-
