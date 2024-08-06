@@ -519,10 +519,7 @@ FiveFoldCrossingValidation <- function(file_format) {
   sumap <- 0
   PTB <- TB[1:2697, ]
   # NOTE: SRM
-  # Rows 5393 and 5394 do not exist in TB
-  # It only has 5392 rows so the code below results in NULLS which causes
-  # problems when the model is being created
-  # To fix it, we use nrow on TB instead
+  # Changed to use nrow to calculate row length to avoid hard coding of values
   # NTB <- TB[2698:5394,]
   NTB <- TB[2698:nrow(TB), ]
 
