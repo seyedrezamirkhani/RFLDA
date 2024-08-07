@@ -16,27 +16,31 @@ library(openxlsx)
 library(readxl)
 library(dplyr)
 library(diffdf)
-library(arrow, warn.conflicts = FALSE)
+# library(arrow, warn.conflicts = FALSE)
 
-test_result_file_name <- "../optimisation_data/excel_read_result.parquet"
+test_result_file_name <- "../optimisation_data/excel_read_result.csv"
+
+input_folder <- "../input_data/"
+
+optimisation_folder <- "../optimisation_data/"
 
 test_file_names <- c(
   ### L:lncRNA(240*1)
-  "../input_data/01-lncRNAs-240.xlsx",
+  "01-lncRNAs-240.xlsx",
   ### D:diseases(412*1)
-  "../input_data/02-diseases-412.xlsx",
+  "02-diseases-412.xlsx",
   ### M:miRNA(495*1)
-  "../input_data/03-miRNAs-495.xlsx",
+  "03-miRNAs-495.xlsx",
   ### LL:lncRNA-lncRNA functional similarities (240*240)
-  "../input_data/04-lncRNA-lncRNA.xlsx",
+  "04-lncRNA-lncRNA.xlsx",
   ### LD:lncRNA-disease associations (240*412)
-  "../input_data/05-lncRNA-disease.xlsx",
+  "05-lncRNA-disease.xlsx",
   ### MD:miRNA-disease associations (495*412)
-  "../input_data/06-miRNA-disease.xlsx",
+  "06-miRNA-disease.xlsx",
   ### DD:disease-disease semantic similarities (412*412)
-  "../input_data/07-disease-disease.xlsx",
+  "07-disease-disease.xlsx",
   ### LM:lncRNA-miRNA interactions (240*495)
-  "../input_data/08-lncRNA-miRNA.xlsx"
+  "08-lncRNA-miRNA.xlsx"
 )
 
 readxl_times <- c()
@@ -44,7 +48,8 @@ readxl_dfs <- c()
 
 for (f in test_file_names) {
   start_time <- Sys.time()
-  df <- read_xlsx(f, sheet = 1, col_names = FALSE)
+  file_name <- paste(input_folder, f, sep = "")
+  df <- read_xlsx(file_name, sheet = 1, col_names = FALSE)
   end_time <- Sys.time()
 
   readxl_dfs <- append(readxl_dfs, df)
@@ -59,7 +64,8 @@ openxlsx_dfs <- c()
 
 for (f in test_file_names) {
   start_time <- Sys.time()
-  df <- read.xlsx(f, sheet = 1, colNames = FALSE)
+  file_name <- paste(input_folder, f, sep = "")
+  df <- read.xlsx(file_name, sheet = 1, colNames = FALSE)
   end_time <- Sys.time()
 
   openxlsx_dfs <- append(openxlsx_dfs, df)
@@ -77,15 +83,10 @@ for (i in 1:length(test_file_names)) {
   # make the column names the same
   colnames(readxl_df) <- colnames(openxlsx_df)
 
-  # print(all_equal(readxl_df, openxlsx_df))
-
   if (isTRUE(all.equal(readxl_df, openxlsx_df)) == FALSE) {
-    # print("NOT EQUAL")
-    # print(c("index", i, "filename", test_file_names[i]))
-    # print(diffdf(readxl_df, openxlsx_df))
+    diff_file_name <- paste(optimisation_folder, "diff_result_", test_file_names[i], ".txt", sep = "")
 
-    diffdf_file_name <- paste("../optimisation_data/", test_file_names[i], sep = "")
-    diffdf(base = readxl_df, compare = openxlsx_df, file = diffdf_file_name)
+    diffdf(base = readxl_df, compare = openxlsx_df, file = diff_file_name, suppress_warnings = TRUE)
 
     is_data_equal <- append(is_data_equal, FALSE)
   } else {
@@ -97,4 +98,5 @@ test_result_df <- data.frame(test_file_names, is_data_equal, readxl_times, openx
 
 colnames(test_result_df) <- c("file_name", "is_data_equal", "readxl_duration_s", "openxlsx_duration_s")
 
-write_parquet(test_result_df, test_result_file_name)
+# write_parquet(test_result_df, test_result_file_name)
+write.csv(test_result_df, test_result_file_name, row.names = FALSE)
