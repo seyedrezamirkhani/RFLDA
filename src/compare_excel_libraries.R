@@ -17,6 +17,8 @@ library(readxl)
 library(dplyr)
 library(diffdf)
 
+options(readxl.show_progress = FALSE)
+
 test_result_file_name <- "../optimisation_data/excel_read_result.csv"
 
 input_folder <- "../input_data/"
@@ -42,62 +44,67 @@ test_file_names <- c(
   "08-lncRNA-miRNA.xlsx"
 )
 
-readxl_times <- c()
-readxl_dfs <- c()
-readxl_nrows <- c()
-readxl_ncols <- c()
-readxl_dfsize <- c()
-
-for (f in test_file_names) {
-  file_name <- paste(input_folder, f, sep = "")
+TimeReadXL <- function(file_name) {
+  full_file_name <- paste(input_folder, file_name, sep = "")
 
   start_time <- Sys.time()
-  df <- read_xlsx(file_name, sheet = 1, col_names = FALSE)
+  df <- read_xlsx(full_file_name, sheet = 1, col_names = FALSE)
   end_time <- Sys.time()
 
-  readxl_nrows <- append(readxl_nrows, nrow(df))
-
-  readxl_ncols <- append(readxl_ncols, ncol(df))
-
-  readxl_dfsize <- append(readxl_dfsize, object.size(df))
-
-  readxl_dfs <- append(readxl_dfs, df)
-
   duration <- as.numeric(difftime(end_time, start_time), units = "secs")
-  readxl_times <- append(readxl_times, duration)
+
+  return(duration)
 }
 
+LoadReadXL <- function(file_name) {
+  full_file_name <- paste(input_folder, file_name, sep = "")
 
-openxlsx_times <- c()
-openxlsx_dfs <- c()
-openxlsx_nrows <- c()
-openxlsx_ncols <- c()
-openxlsx_dfsize <- c()
+  df <- read_xlsx(full_file_name, sheet = 1, col_names = FALSE)
 
-for (f in test_file_names) {
-  file_name <- paste(input_folder, f, sep = "")
+  df <- data.frame(df)
+
+  return(df)
+}
+
+TimeOpenXLSX <- function(file_name) {
+  full_file_name <- paste(input_folder, file_name, sep = "")
 
   start_time <- Sys.time()
-  df <- read.xlsx(file_name, sheet = 1, colNames = FALSE)
+  df <- read.xlsx(full_file_name, sheet = 1, colNames = FALSE)
   end_time <- Sys.time()
 
-  openxlsx_nrows <- append(openxlsx_nrows, nrow(df))
-
-  openxlsx_ncols <- append(openxlsx_ncols, ncol(df))
-
-  openxlsx_dfsize <- append(openxlsx_dfsize, object.size(df))
-
-  openxlsx_dfs <- append(openxlsx_dfs, df)
-
   duration <- as.numeric(difftime(end_time, start_time), units = "secs")
-  openxlsx_times <- append(openxlsx_times, duration)
+
+  return(duration)
 }
+
+LoadOpenXLSX <- function(file_name) {
+  full_file_name <- paste(input_folder, file_name, sep = "")
+
+  df <- read.xlsx(full_file_name, sheet = 1, colNames = FALSE)
+
+  df <- data.frame(df)
+
+  return(df)
+}
+
+readxl_times <- sapply(test_file_names, TimeReadXL, USE.NAMES = FALSE)
+readxl_dfs <- sapply(test_file_names, LoadReadXL, USE.NAMES = FALSE)
+readxl_nrows <- sapply(readxl_dfs, nrow, USE.NAMES = FALSE)
+readxl_ncols <- sapply(readxl_dfs, ncol, USE.NAMES = FALSE)
+readxl_dfsize <- sapply(readxl_dfs, object.size, USE.NAMES = FALSE)
+
+openxlsx_times <- sapply(test_file_names, TimeOpenXLSX, USE.NAMES = FALSE)
+openxlsx_dfs <- sapply(test_file_names, LoadOpenXLSX, USE.NAMES = FALSE)
+openxlsx_nrows <- sapply(openxlsx_dfs, nrow, USE.NAMES = FALSE)
+openxlsx_ncols <- sapply(openxlsx_dfs, ncol, USE.NAMES = FALSE)
+openxlsx_dfsize <- sapply(openxlsx_dfs, object.size, USE.NAMES = FALSE)
 
 is_data_equal <- c()
 
 for (i in 1:length(test_file_names)) {
-  readxl_df <- data.frame(readxl_dfs[i])
-  openxlsx_df <- data.frame(openxlsx_dfs[i])
+  readxl_df <- readxl_dfs[i]
+  openxlsx_df <- openxlsx_dfs[i]
 
   # make the column names the same
   colnames(readxl_df) <- colnames(openxlsx_df)
