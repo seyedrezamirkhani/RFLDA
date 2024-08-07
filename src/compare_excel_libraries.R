@@ -80,9 +80,12 @@ for (i in 1:length(test_file_names)) {
   # print(all_equal(readxl_df, openxlsx_df))
 
   if (isTRUE(all.equal(readxl_df, openxlsx_df)) == FALSE) {
-    print("NOT EQUAL")
-    print(c("index", i, "filename", test_file_names[i]))
-    print(diffdf(readxl_df, openxlsx_df))
+    # print("NOT EQUAL")
+    # print(c("index", i, "filename", test_file_names[i]))
+    # print(diffdf(readxl_df, openxlsx_df))
+
+    diffdf_file_name <- paste("../optimisation_data/", test_file_names[i], sep = "")
+    diffdf(base = readxl_df, compare = openxlsx_df, file = diffdf_file_name)
 
     is_data_equal <- append(is_data_equal, FALSE)
   } else {
