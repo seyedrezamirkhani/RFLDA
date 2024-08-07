@@ -45,12 +45,16 @@ test_file_names <- c(
 
 readxl_times <- c()
 readxl_dfs <- c()
+readxl_nrows <- c()
 
 for (f in test_file_names) {
-  start_time <- Sys.time()
   file_name <- paste(input_folder, f, sep = "")
+
+  start_time <- Sys.time()
   df <- read_xlsx(file_name, sheet = 1, col_names = FALSE)
   end_time <- Sys.time()
+
+  readxl_nrows <- append(readxl_nrows, nrow(df))
 
   readxl_dfs <- append(readxl_dfs, df)
 
@@ -61,12 +65,16 @@ for (f in test_file_names) {
 
 openxlsx_times <- c()
 openxlsx_dfs <- c()
+openxlsx_nrows <- c()
 
 for (f in test_file_names) {
-  start_time <- Sys.time()
   file_name <- paste(input_folder, f, sep = "")
+
+  start_time <- Sys.time()
   df <- read.xlsx(file_name, sheet = 1, colNames = FALSE)
   end_time <- Sys.time()
+
+  openxlsx_nrows <- append(openxlsx_nrows, nrow(df))
 
   openxlsx_dfs <- append(openxlsx_dfs, df)
 
@@ -94,9 +102,8 @@ for (i in 1:length(test_file_names)) {
   }
 }
 
-test_result_df <- data.frame(test_file_names, is_data_equal, readxl_times, openxlsx_times)
+test_result_df <- data.frame(test_file_names, is_data_equal, readxl_times, openxlsx_times, readxl_nrows, openxlsx_nrows)
 
-colnames(test_result_df) <- c("file_name", "is_data_equal", "readxl_duration_s", "openxlsx_duration_s")
+colnames(test_result_df) <- c("file_name", "is_data_equal", "readxl_duration_s", "openxlsx_duration_s", "readxl_nrows", "openxlsx_nrows")
 
-# write_parquet(test_result_df, test_result_file_name)
 write.csv(test_result_df, test_result_file_name, row.names = FALSE)
