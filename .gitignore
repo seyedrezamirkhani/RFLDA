@@ -1,5 +1,6 @@
 # R files
 .Rhistory
+.RData
 
 # vim tmp files
 .swp
