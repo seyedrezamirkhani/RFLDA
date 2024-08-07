@@ -59,10 +59,6 @@ for (f in test_file_names) {
 
   readxl_ncols <- append(readxl_ncols, ncol(df))
 
-  # df_size <- object.size(df)
-
-  # readxl_dfsize <- append(readxl_dfsize, df_size[0])
-
   readxl_dfsize <- append(readxl_dfsize, object.size(df))
 
   readxl_dfs <- append(readxl_dfs, df)
@@ -88,10 +84,6 @@ for (f in test_file_names) {
   openxlsx_nrows <- append(openxlsx_nrows, nrow(df))
 
   openxlsx_ncols <- append(openxlsx_ncols, ncol(df))
-
-  # df_size <- object.size(df)
-
-  # openxlsx_dfsize <- append(openxlsx_dfsize, df_size[0])
 
   openxlsx_dfsize <- append(openxlsx_dfsize, object.size(df))
 
