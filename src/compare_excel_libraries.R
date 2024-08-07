@@ -16,6 +16,9 @@ library(openxlsx)
 library(readxl)
 library(dplyr)
 library(diffdf)
+library(arrow, warn.conflicts = FALSE)
+
+read_result_file_name <- "../optimisation_data/excel_read_result.parquet"
 
 test_file_names <- c(
   ### L:lncRNA(240*1)
@@ -66,19 +69,22 @@ for (f in test_file_names) {
 }
 
 read_speed_df <- data.frame(test_file_names, readxl_times, openxlsx_times)
+colnames(read_speed_df) <- c("file_name", "readxl_duration_s", "openxlsx_duration_s")
 
-for (i in 1:length(test_file_names)) {
-  readxl_df <- data.frame(readxl_dfs[i])
-  openxlsx_df <- data.frame(openxlsx_dfs[i])
+write_parquet(read_speed_df, read_result_file_name)
 
-  # make the column names the same
-  colnames(readxl_df) <- colnames(openxlsx_df)
-
-  # print(all_equal(readxl_df, openxlsx_df))
-
-  if (isTRUE(all.equal(readxl_df, openxlsx_df)) == FALSE) {
-    print("NOT EQUAL")
-    print(c("index", i, "filename", test_file_names[i]))
-    print(diffdf(readxl_df, openxlsx_df))
-  }
-}
+# for (i in 1:length(test_file_names)) {
+#   readxl_df <- data.frame(readxl_dfs[i])
+#   openxlsx_df <- data.frame(openxlsx_dfs[i])
+#
+#   # make the column names the same
+#   colnames(readxl_df) <- colnames(openxlsx_df)
+#
+#   # print(all_equal(readxl_df, openxlsx_df))
+#
+#   if (isTRUE(all.equal(readxl_df, openxlsx_df)) == FALSE) {
+#     print("NOT EQUAL")
+#     print(c("index", i, "filename", test_file_names[i]))
+#     print(diffdf(readxl_df, openxlsx_df))
+#   }
+# }
