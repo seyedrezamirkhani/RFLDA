@@ -16,7 +16,6 @@ library(openxlsx)
 library(readxl)
 library(dplyr)
 library(diffdf)
-# library(arrow, warn.conflicts = FALSE)
 
 test_result_file_name <- "../optimisation_data/excel_read_result.csv"
 
@@ -46,6 +45,8 @@ test_file_names <- c(
 readxl_times <- c()
 readxl_dfs <- c()
 readxl_nrows <- c()
+readxl_ncols <- c()
+readxl_dfsize <- c()
 
 for (f in test_file_names) {
   file_name <- paste(input_folder, f, sep = "")
@@ -55,6 +56,14 @@ for (f in test_file_names) {
   end_time <- Sys.time()
 
   readxl_nrows <- append(readxl_nrows, nrow(df))
+
+  readxl_ncols <- append(readxl_ncols, ncol(df))
+
+  # df_size <- object.size(df)
+
+  # readxl_dfsize <- append(readxl_dfsize, df_size[0])
+
+  readxl_dfsize <- append(readxl_dfsize, object.size(df))
 
   readxl_dfs <- append(readxl_dfs, df)
 
@@ -66,6 +75,8 @@ for (f in test_file_names) {
 openxlsx_times <- c()
 openxlsx_dfs <- c()
 openxlsx_nrows <- c()
+openxlsx_ncols <- c()
+openxlsx_dfsize <- c()
 
 for (f in test_file_names) {
   file_name <- paste(input_folder, f, sep = "")
@@ -75,6 +86,14 @@ for (f in test_file_names) {
   end_time <- Sys.time()
 
   openxlsx_nrows <- append(openxlsx_nrows, nrow(df))
+
+  openxlsx_ncols <- append(openxlsx_ncols, ncol(df))
+
+  # df_size <- object.size(df)
+
+  # openxlsx_dfsize <- append(openxlsx_dfsize, df_size[0])
+
+  openxlsx_dfsize <- append(openxlsx_dfsize, object.size(df))
 
   openxlsx_dfs <- append(openxlsx_dfs, df)
 
@@ -102,8 +121,30 @@ for (i in 1:length(test_file_names)) {
   }
 }
 
-test_result_df <- data.frame(test_file_names, is_data_equal, readxl_times, openxlsx_times, readxl_nrows, openxlsx_nrows)
+test_result_df <- data.frame(
+  test_file_names,
+  is_data_equal,
+  readxl_times,
+  openxlsx_times,
+  readxl_nrows,
+  openxlsx_nrows,
+  readxl_ncols,
+  openxlsx_ncols,
+  readxl_dfsize,
+  openxlsx_dfsize
+)
 
-colnames(test_result_df) <- c("file_name", "is_data_equal", "readxl_duration_s", "openxlsx_duration_s", "readxl_nrows", "openxlsx_nrows")
+colnames(test_result_df) <- c(
+  "file_name",
+  "is_data_equal",
+  "readxl_duration_s",
+  "openxlsx_duration_s",
+  "readxl_nrows",
+  "openxlsx_nrows",
+  "readxl_ncols",
+  "openxlsx_ncols",
+  "readxl_dfsize_b",
+  "openxlsx_dfsize_b"
+)
 
 write.csv(test_result_df, test_result_file_name, row.names = FALSE)
