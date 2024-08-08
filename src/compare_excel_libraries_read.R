@@ -19,6 +19,8 @@ library(diffdf)
 
 options(readxl.show_progress = FALSE)
 
+source("common_functions.R")
+
 test_result_file_name <- "../optimisation_data/excel_read_result.csv"
 
 input_folder <- "../input_data/"
@@ -44,43 +46,16 @@ test_file_names <- c(
   "08-lncRNA-miRNA.xlsx"
 )
 
-LoadAndTimeReadXL <- function(file_name) {
-  full_file_name <- paste(input_folder, file_name, sep = "")
+full_test_file_names <- unlist(lapply(test_file_names, function(x) paste(input_folder, x, sep = "")))
 
-  start_time <- Sys.time()
-  df <- read_xlsx(full_file_name, sheet = 1, col_names = FALSE)
-  end_time <- Sys.time()
-
-  duration <- as.numeric(difftime(end_time, start_time), units = "secs")
-
-  df <- data.frame(df)
-
-  return(list(time_taken = duration, data = df))
-}
-
-
-LoadAndTimeOpenXLSX <- function(file_name) {
-  full_file_name <- paste(input_folder, file_name, sep = "")
-
-  start_time <- Sys.time()
-  df <- read.xlsx(full_file_name, sheet = 1, colNames = FALSE)
-  end_time <- Sys.time()
-
-  duration <- as.numeric(difftime(end_time, start_time), units = "secs")
-
-  df <- data.frame(df)
-
-  return(list(time_taken = duration, data = df))
-}
-
-result <- lapply(test_file_names, LoadAndTimeReadXL)
+result <- lapply(full_test_file_names, LoadAndTimeReadXL)
 readxl_times <- unlist(lapply(result, function(x) x$time_taken))
 readxl_dfs <- lapply(result, function(x) x$data)
 readxl_nrows <- unlist(sapply(readxl_dfs, nrow, USE.NAMES = FALSE))
 readxl_ncols <- unlist(sapply(readxl_dfs, ncol, USE.NAMES = FALSE))
 readxl_dfsize <- unlist(sapply(readxl_dfs, object.size, USE.NAMES = FALSE))
 
-result <- lapply(test_file_names, LoadAndTimeOpenXLSX)
+result <- lapply(full_test_file_names, LoadAndTimeOpenXLSX)
 openxlsx_times <- unlist(lapply(result, function(x) x$time_taken))
 openxlsx_dfs <- lapply(result, function(x) x$data)
 openxlsx_nrows <- unlist(sapply(openxlsx_dfs, nrow, USE.NAMES = FALSE))
