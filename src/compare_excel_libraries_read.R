@@ -108,4 +108,7 @@ colnames(test_result_df) <- c(
   "openxlsx_dfsize_b"
 )
 
+# sort data frame by size
+test_result_df <- test_result_df[order(test_result_df$readxl_dfsize_b), ]
+
 write.csv(test_result_df, test_result_file_name, row.names = FALSE)

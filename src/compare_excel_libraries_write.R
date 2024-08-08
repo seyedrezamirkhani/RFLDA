@@ -10,6 +10,8 @@ library(writexl)
 library(dplyr)
 library(diffdf)
 
+source("common_functions.R")
+
 test_result_file_name <- "../optimisation_data/excel_write_result.csv"
 
 input_folder <- "../input_data/"
@@ -35,39 +37,9 @@ test_file_names <- c(
   "08-lncRNA-miRNA.xlsx"
 )
 
-LoadData <- function(file_name) {
-  full_file_name <- paste(input_folder, file_name, sep = "")
+full_test_file_names <- unlist(lapply(test_file_names, function(x) paste(input_folder, x, sep = "")))
 
-  df <- read.xlsx(full_file_name, sheet = 1, colNames = FALSE)
-
-  return(df)
-}
-
-WriteAndTimeOpenXLSX <- function(df) {
-  full_file_name <- tempfile(pattern = "file", fileext = ".xslt")
-
-  start_time <- Sys.time()
-  df <- write.xlsx(df, file = full_file_name, colNames = FALSE)
-  end_time <- Sys.time()
-
-  duration <- as.numeric(difftime(end_time, start_time), units = "secs")
-
-  return(duration)
-}
-
-WriteAndTimeWriteXL <- function(df) {
-  full_file_name <- tempfile(pattern = "file", fileext = ".xslt")
-
-  start_time <- Sys.time()
-  df <- write_xlsx(df, full_file_name, format_headers = FALSE, use_zip64 = TRUE)
-  end_time <- Sys.time()
-
-  duration <- as.numeric(difftime(end_time, start_time), units = "secs")
-
-  return(duration)
-}
-
-dfs <- sapply(test_file_names, LoadData)
+dfs <- sapply(full_test_file_names, ReadExcelData)
 nrows <- unlist(sapply(dfs, nrow, USE.NAMES = FALSE))
 ncols <- unlist(sapply(dfs, ncol, USE.NAMES = FALSE))
 dfsize <- unlist(sapply(dfs, object.size, USE.NAMES = FALSE))

@@ -7,6 +7,12 @@ library(openxlsx)
 library(writexl)
 library(arrow, warn.conflicts = FALSE)
 
+ReadExcelData <- function(full_file_name) {
+  df <- read.xlsx(full_file_name, sheet = 1, colNames = FALSE)
+
+  return(df)
+}
+
 LoadAndTimeReadXL <- function(full_file_name) {
   start_time <- Sys.time()
   df <- read_xlsx(full_file_name, sheet = 1, col_names = FALSE)
