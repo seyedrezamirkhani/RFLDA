@@ -1,0 +1,22 @@
+Differences found between the objects!
+
+A summary is given below.
+
+Not all Values Compared Equal
+All rows are shown in table below
+
+  =============================
+   Variable  No of Differences 
+  -----------------------------
+      X1             1         
+  -----------------------------
+
+
+All rows are shown in table below
+
+  ============================================================================
+   VARIABLE  ..ROWNUMBER..           BASE                    COMPARE          
+  ----------------------------------------------------------------------------
+      X1          57        bone remodeling disease   bone remodeling disease 
+  ----------------------------------------------------------------------------
+
