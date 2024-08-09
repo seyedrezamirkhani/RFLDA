@@ -70,16 +70,48 @@ LoadAndTimeSQLDF <- function() {
 result <- LoadAndTimeSQLDF()
 sqldf_duration <- result$time_taken
 sqldf_df <- result$data
+sqldf_nrows <- unlist(sapply(sqldf_df, nrow, USE.NAMES = FALSE))
+sqldf_ncols <- unlist(sapply(sqldf_df, ncol, USE.NAMES = FALSE))
+sqldf_dfsize <- unlist(sapply(sqldf_df, object.size, USE.NAMES = FALSE))
+
 
 result <- LoadAndTimeNestedLoop()
 nested_loop_duration <- result$time_taken
 nested_loop_df <- result$data
+nested_loop_nrows <- unlist(sapply(nested_loop_df, nrow, USE.NAMES = FALSE))
+nested_loop_ncols <- unlist(sapply(nested_loop_df, ncol, USE.NAMES = FALSE))
+nested_loop_dfsize <- unlist(sapply(nested_loop_df, object.size, USE.NAMES = FALSE))
 
+is_data_equal <- TRUE
 
 if (isTRUE(all.equal(sqldf_df, nested_loop_df)) == FALSE) {
+  is_data_equal <- FALSE
+
   diff_file_name <- paste(optimisation_folder, "diff_result_nested_loop", ".txt", sep = "")
 
   diffdf(base = sqldf_df, compare = nested_loop_df, file = diff_file_name, suppress_warnings = TRUE)
 } else {
   print("sqldf_df and nested_loop_df are the same")
 }
+
+test_result_df <- data.frame(
+  is_data_equal,
+  sqldf_nrows,
+  nested_loop_nrows,
+  sqldf_ncols,
+  nested_loop_ncols,
+  sqldf_dfsize,
+  nested_loop_dfsize
+)
+
+colnames(test_result_df) <- c(
+  "is_data_equal",
+  "sqldf_nrows",
+  "nested_loop_nrows",
+  "sqldf_ncols",
+  "nested_loop_ncols",
+  "sqldf_dfsize",
+  "nested_loop_dfsize"
+)
+
+write.csv(test_result_df, test_result_file_name, row.names = FALSE)
