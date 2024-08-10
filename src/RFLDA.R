@@ -186,7 +186,7 @@ PrepareData <- function(file_format) {
       '
           UPDATE LDExcl0 SET label = 1
           WHERE EXISTS (
-            SELECT "x" FROM LDA
+            SELECT "x" FROM LDExcl0, LDA
               WHERE LDExcl0.X1 = LDA.X1 AND LDExcl0.X2 = LDA.X2
           )',
       "SELECT * FROM main.LDExcl0"
