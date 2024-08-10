@@ -55,7 +55,7 @@ LoadAndTimeSQLDF <- function() {
       '
         UPDATE LDExcl0 SET label = 1
         WHERE EXISTS (
-          SELECT "x" FROM LDA
+          SELECT "x" FROM LDExcl0, LDA
             WHERE LDExcl0.X1 = LDA.X1 AND LDExcl0.X2 = LDA.X2
         )',
       "SELECT * FROM main.LDExcl0"
@@ -70,17 +70,17 @@ LoadAndTimeSQLDF <- function() {
 result <- LoadAndTimeSQLDF()
 sqldf_duration <- result$time_taken
 sqldf_df <- result$data
-sqldf_nrows <- unlist(sapply(sqldf_df, nrow, USE.NAMES = FALSE))
-sqldf_ncols <- unlist(sapply(sqldf_df, ncol, USE.NAMES = FALSE))
-sqldf_dfsize <- unlist(sapply(sqldf_df, object.size, USE.NAMES = FALSE))
+sqldf_nrows <- nrow(sqldf_df)
+sqldf_ncols <- ncol(sqldf_df)
+sqldf_dfsize <- object.size(sqldf_df)
 
 
 result <- LoadAndTimeNestedLoop()
 nested_loop_duration <- result$time_taken
 nested_loop_df <- result$data
-nested_loop_nrows <- unlist(sapply(nested_loop_df, nrow, USE.NAMES = FALSE))
-nested_loop_ncols <- unlist(sapply(nested_loop_df, ncol, USE.NAMES = FALSE))
-nested_loop_dfsize <- unlist(sapply(nested_loop_df, object.size, USE.NAMES = FALSE))
+nested_loop_nrows <- nrow(nested_loop_df)
+nested_loop_ncols <- ncol(nested_loop_df)
+nested_loop_dfsize <- object.size(nested_loop_df)
 
 is_data_equal <- TRUE
 
