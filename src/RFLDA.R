@@ -185,52 +185,15 @@ PrepareData <- function(file_format) {
   row_id.fr <- data.frame("row_id" = seq_len(nrow(LDExcl0)))
   LDExcl0 <- cbind(row_id.fr, LDExcl0)
 
-  # print('building LDExcl0_1')
-  # print(Sys.time())
   LDExcl0_1 <- sqldf(
     "SELECT LDExcl0.row_id FROM LDExcl0, LDA WHERE LDExcl0.X1 = LDA.X1 AND LDExcl0.X2 = LDA.X2"
   )
-  # print('finished LDExcl0_1')
-  # print(Sys.time())
 
-  # print('updating LDExcl0')
-  # print(Sys.time())
+  # update label to 1 for rows which match LDExcl0 and LDA on X1 and X2 columns
   LDExcl0[LDExcl0_1$row_id, "label"] <- rep(1, nrow(LDExcl0_1))
-  # print('finished LDExcl0')
-  # print(Sys.time())
 
   # Now we can drop row_id; it was only needed to populate the label column correctly
   LDExcl0 <- subset(LDExcl0, select = -c(row_id))
-
-  # print('building LDExcl0_0')
-  # print(Sys.time())
-  # LDExcl0_0 <- sqldf(
-  #   'SELECT 0 as label, LDExcl0.* FROM LDExcl0, LDA WHERE LDExcl0.X1 <> LDA.X1 OR LDExcl0.X2 <> LDA.X2'
-  # )
-  # print('finished LDExcl0_0')
-  # print(Sys.time())
-
-  # print('joining LDExcl0_1, LDExcl0_0')
-  # print(Sys.time())
-  #
-  # LDExcl0 <- rbind(LDExcl0_1, LDExcl0_0)
-  #
-  # print('finished LDExcl0_1, LDExcl0_0')
-  # print(Sys.time())
-
-
-
-  # system.time(LDExcl0 <- sqldf(
-  #   c(
-  #     '
-  #         UPDATE LDExcl0 SET label = 1
-  #         WHERE EXISTS (
-  #           SELECT "x" FROM LDExcl0, LDA
-  #             WHERE LDExcl0.X1 = LDA.X1 AND LDExcl0.X2 = LDA.X2
-  #         )',
-  #     "SELECT * FROM main.LDExcl0"
-  #   )
-  # ))
 
   ### regularize samples using maximum-minimum regularization method (98880*1955)
   B1 <- subset(LDExcl0[, ], select = -c(label, X1, X2))
