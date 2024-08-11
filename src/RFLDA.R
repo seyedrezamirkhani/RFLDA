@@ -343,7 +343,6 @@ ComputeFeatureImportance <- function(file_format) {
       importance = "impurity",
       # Use 'impurity' for Gini importance or 'permutation' for permutation importance
       num.trees = 500,
-      na.action = "na.omit",
       num.threads = ncores_to_use
     )
     ### accumulate variable importance score
@@ -462,7 +461,6 @@ ComputeClassficationAccuracy <- function(file_format = file_format) {
           importance = "impurity",
           # Use 'impurity' or 'permutation' for ranger importance
           num.trees = ntree,
-          na.action = "na.omit",
           num.threads = ncores_to_use # Use one less core than available
         )
       }))
@@ -594,7 +592,6 @@ FiveFoldCrossingValidation <- function(file_format) {
         importance = "impurity",
         # Use 'impurity' or 'permutation' for ranger importance
         num.trees = ntree,
-        na.action = "na.omit",
         num.threads = detectCores() - 1 # Use one less core than available
       )
     }))
@@ -704,7 +701,6 @@ Predict <- function(file_format) {
       importance = "impurity",
       # Use 'impurity' or 'permutation' for ranger importance
       num.trees = ntree,
-      na.action = "na.omit",
       num.threads = detectCores() - 1 # Use one less core than available
     )
   }))
