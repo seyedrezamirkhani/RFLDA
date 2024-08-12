@@ -1,0 +1,2 @@
+"is_data_equal","nested_loop_duration_s","sqldf_duration_s","nested_loop_nrows","sqldf_nrows","nested_loop_ncols","sqldf_ncols","nested_loop_dfsize","sqldf_dfsize"
+TRUE,36223.4289991856,57.7689139842987,98880,98880,1955,1955,1546764064,1546764064
