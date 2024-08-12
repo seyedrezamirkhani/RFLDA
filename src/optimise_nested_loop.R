@@ -11,8 +11,6 @@ source("common_functions.R")
 
 test_result_file_name <- "../optimisation_data/optimise_nested_loop.csv"
 
-input_folder <- "../output_data/"
-
 optimisation_folder <- "../optimisation_data/"
 
 LoadAndTimeNestedLoop <- function() {
@@ -48,19 +46,23 @@ LoadAndTimeSQLDF <- function() {
   label.fr <- data.frame("label" = c(0))
   LDExcl0 <- cbind(label.fr, LDExcl0)
 
-
   start_time <- Sys.time()
-  LDExcl0 <- sqldf(
-    c(
-      '
-        UPDATE LDExcl0 SET label = 1
-        WHERE EXISTS (
-          SELECT "x" FROM LDExcl0, LDA
-            WHERE LDExcl0.X1 = LDA.X1 AND LDExcl0.X2 = LDA.X2
-        )',
-      "SELECT * FROM main.LDExcl0"
-    )
+
+
+  # Add a new numeric row_id column to aid setting the labels correctly
+  row_id.fr <- data.frame("row_id" = seq_len(nrow(LDExcl0)))
+  LDExcl0 <- cbind(row_id.fr, LDExcl0)
+
+  LDExcl0_1 <- sqldf(
+    "SELECT LDExcl0.row_id FROM LDExcl0, LDA WHERE LDExcl0.X1 = LDA.X1 AND LDExcl0.X2 = LDA.X2"
   )
+
+  # update label to 1 for rows which match LDExcl0 and LDA on X1 and X2 columns
+  LDExcl0[LDExcl0_1$row_id, "label"] <- rep(1, nrow(LDExcl0_1))
+
+  # Now we can drop row_id; it was only needed to populate the label column correctly
+  LDExcl0 <- subset(LDExcl0, select = -c(row_id))
+
   end_time <- Sys.time()
 
   duration <- as.numeric(difftime(end_time, start_time), units = "secs")
@@ -96,22 +98,26 @@ if (isTRUE(all.equal(sqldf_df, nested_loop_df)) == FALSE) {
 
 test_result_df <- data.frame(
   is_data_equal,
-  sqldf_nrows,
+  nested_loop_duration,
+  sqldf_duration,
   nested_loop_nrows,
-  sqldf_ncols,
+  sqldf_nrows,
   nested_loop_ncols,
-  sqldf_dfsize,
-  nested_loop_dfsize
+  sqldf_ncols,
+  nested_loop_dfsize,
+  sqldf_dfsize
 )
 
 colnames(test_result_df) <- c(
   "is_data_equal",
-  "sqldf_nrows",
+  "nested_loop_duration_s",
+  "sqldf_duration_s",
   "nested_loop_nrows",
-  "sqldf_ncols",
+  "sqldf_nrows",
   "nested_loop_ncols",
-  "sqldf_dfsize",
-  "nested_loop_dfsize"
+  "sqldf_ncols",
+  "nested_loop_dfsize",
+  "sqldf_dfsize"
 )
 
 write.csv(test_result_df, test_result_file_name, row.names = FALSE)
